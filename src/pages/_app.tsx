@@ -82,7 +82,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <link rel="icon" href="/logo_2.ico" />
         <meta name="keywords" content="doctor,safe,medicine,blockchain" />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://dedoctor.netlify.app/" />
+        <meta property="og:url" content="ttps://Dmed.vercel.app/" />
         <meta
           property="og:title"
           content="DeDoctor are web3 based Doctor appointment app."
@@ -96,10 +96,10 @@ export default function App({ Component, pageProps }: AppProps) {
         <meta name="language" content="ES" />
         <meta
           name="author"
-          content="Nayan Radadiya, nayanrdeveloper@gmail.com"
+          content="Abraham Anavheoba, wisdomvolt@gmail.com"
         />
         <meta property="twitter:card" content="summary_large_image" />
-        <meta property="twitter:url" content="https://dedoctor.netlify.app/" />
+        <meta property="twitter:url" content="https://dmed.vercel.app/" />
         <meta
           property="twitter:title"
           content="DeDoctor are web3 based Doctor appointment app."
@@ -110,7 +110,7 @@ export default function App({ Component, pageProps }: AppProps) {
         />
         <meta property="twitter:image" content="/logo-no-background.svg" />
 
-        <meta name="url" content="https://dedoctor.netlify.app/" />
+        <meta name="url" content="https://dmed.vercel.app/" />
         <meta name="theme-color" content="#000000" />
         <meta
           name="description"

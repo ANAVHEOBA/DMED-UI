@@ -24,7 +24,7 @@ function OverviewTab() {
         About Me
       </h5>
       <p className="text-[#272b41] dark:text-dark-muted">
-        Dr. Ananya Polam Reddy. has been working in the field of Obstetrics and
+        Dr. Abraham Anavheoba. has been working in the field of Obstetrics and
         Gynaecology since 2013. She specializes in Reproductive medicine as well
         as general obstetrics and gynaecology. Prior to joining our practice, Dr
         Ananya attended Rajiv Gandhi University, where she earned her
@@ -34,7 +34,7 @@ function OverviewTab() {
         us Dr Ananya has worked in reputed hospitals like Vydehi Hospital,
         Manipal Hospitals Bangalore and Yasomathi hospital and now she is a
         Consultant Obstetrician and gynaecologist, at Koshy's Hospital,
-        Bangalore
+        Nigeria
       </p>
       <div className="space-y-2">
         <h5 className="font-medium text-lg dark:text-white">Services</h5>
