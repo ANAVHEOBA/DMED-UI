@@ -1,7 +1,10 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./src/**/*.{js,ts,jsx,tsx}",],
-  darkMode: "class", 
+  content: [
+    // Specify the paths to all of your template files
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  darkMode: "class", // Enables dark mode support with the 'class' strategy
   theme: {
     extend: {
       colors: {
@@ -20,7 +23,6 @@ module.exports = {
         "dark-footer": "#030017",
         "dark-input-text": "#828FA0",
         "modal-heading": "#272b41",
-        
       },
       boxShadow: {
         "light": "2px 2px 13px rgb(0 0 0 / 10%)",
@@ -28,5 +30,6 @@ module.exports = {
       }
     },
   },
-  plugins: [],
+  plugins: [], // Add any plugins here if needed
 }
+
