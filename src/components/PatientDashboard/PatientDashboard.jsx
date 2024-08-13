@@ -21,7 +21,7 @@ function PatientDashboard() {
   const [patientData, setPatientData] = useState();
   const [doctorList, setDoctorList] = useState();
   const [myAppointmentList, setMyAppointmentList] = useState();
-  
+
   const tabList = [
     {
       id: 1,
@@ -34,7 +34,7 @@ function PatientDashboard() {
       component: <NewAppointment doctorList={doctorList} />,
     },
   ];
-  
+
   const [activeTab, setActiveTab] = useState(tabList[0]);
 
   const fetchPatientData = async () => {
@@ -104,12 +104,16 @@ function PatientDashboard() {
   };
 
   useEffect(() => {
-    fetchPatientData();
-    fetchDoctorList();
-    if (patientData && patientData.patientId) {
-      fetchPatientAppointments();
-    }
-  }, [patientData && patientData.patientId]);
+    const fetchData = async () => {
+      await fetchPatientData();
+      await fetchDoctorList();
+      if (patientData && patientData.patientId) {
+        await fetchPatientAppointments();
+      }
+    };
+
+    fetchData();
+  }, [address, provider, signer, patientData?.patientId]); // Added missing dependencies
 
   return (
     <div className="flex space-x-5 my-8 mx-5">
@@ -119,7 +123,7 @@ function PatientDashboard() {
             <Image
               src={generateIpfsMediaLink(patientData.image)}
               fill
-              alt="logo"
+              alt="Patient profile picture"
               className="rounded-full"
             />
           </div>

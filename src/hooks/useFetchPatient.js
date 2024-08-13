@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
 import deDoctorABI from "@/constants/constants";
 
@@ -18,7 +18,7 @@ const useContractData = (provider, walletAddress) => {
     setContract(contractInstance);
   }, [provider]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (contract && walletAddress) {
       try {
         // Call the smart contract method to fetch data
@@ -28,11 +28,11 @@ const useContractData = (provider, walletAddress) => {
         console.error("Error fetching data from contract:", error);
       }
     }
-  };
+  }, [contract, walletAddress]);
 
   useEffect(() => {
     fetchData();
-  }, [contract, walletAddress]);
+  }, [fetchData]);
 
   return data;
 };

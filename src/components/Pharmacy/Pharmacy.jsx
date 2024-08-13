@@ -1,12 +1,13 @@
 import deDoctorABI from "@/constants/constants";
 import generateIpfsMediaLink from "@/utils/generateIpfsLink";
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Breadcrumb from "../Breadcrumb/Breadcrumb";
 import PharmacyCard from "./PharmacyCard";
 import { useAccount, useSigner, useProvider } from "wagmi";
 import { Dna } from "react-loader-spinner";
 import { ethers } from "ethers";
+import { toast } from "react-toastify"; // Assuming you are using react-toastify
 
 function Pharmacy() {
   // Define the state to hold the list of pharmacies
@@ -16,7 +17,7 @@ function Pharmacy() {
   const { address } = useAccount();
 
   // Function to fetch and update pharmacy data from the blockchain
-  const updateData = async () => {
+  const updateData = useCallback(async () => {
     try {
       // Create an instance of the smart contract
       const contract = new ethers.Contract(
@@ -58,12 +59,12 @@ function Pharmacy() {
       console.error("Error fetching pharmacies:", error);
       toast.error("Failed to load pharmacies.");
     }
-  };
+  }, [signer, provider]); // Add dependencies
 
   // UseEffect hook to call updateData once on component mount
   useEffect(() => {
     updateData();
-  }, []); // Empty dependency array means this runs once on mount
+  }, [updateData]); // Include updateData in the dependency array
 
   return (
     <div>

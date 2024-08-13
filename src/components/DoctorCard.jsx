@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image"; // Import Image component from Next.js
 import { MdLocationOn } from "react-icons/md";
 import { BiTime, BiMoney } from "react-icons/bi";
 
@@ -6,7 +7,14 @@ function DoctorCard({ id, name, category, image, address, slotTime, chargeStart,
   return (
     <div className="p-3 bg-white rounded-md shadow-lg space-y-2 dark:border dark:border-dark-input-border dark:bg-dark-card dark:text-dark-muted">
       <div className="relative h-36 w-full">
-        <img src={image} alt={name} className="rounded-md object-cover w-full h-full" />
+        {/* Use Next.js Image component for automatic image optimization */}
+        <Image 
+          src={image} 
+          alt={name} 
+          className="rounded-md object-cover" 
+          layout="fill" 
+          objectFit="cover" 
+        />
       </div>
       <h4 className="text-[#272b41] font-medium text-lg dark:text-white">{name}</h4>
       <p className="text-[#757575] text-sm dark:text-dark-muted">{category}</p>

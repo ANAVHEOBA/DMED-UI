@@ -2,6 +2,7 @@ import React from "react";
 import { useTheme } from "next-themes";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { MdOutlineDarkMode, MdLightMode } from "react-icons/md";
+import Image from "next/image"; // Import Image from next/image for better performance
 import Link from "next/link";
 
 function DeskNavbar() {
@@ -25,10 +26,11 @@ function DeskNavbar() {
     <nav className="flex justify-between items-center px-4 py-3 border-b border-gray-200 shadow-lg dark:border-gray-700">
       {/* Logo Section */}
       <div className="relative h-16 w-16">
-        <img
+        <Image
           src="/logo-no-background.svg"
           alt="DeDoctor"
-          className="object-cover w-full h-full"
+          layout="fill"
+          objectFit="cover"
         />
       </div>
 

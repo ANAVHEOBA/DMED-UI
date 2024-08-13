@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import ProfileTab from "../DoctorProfile/ProfileTab";
 import PharmacyGeneral from "./PharmacyGeneral";
 import { useRouter } from "next/router";
@@ -20,7 +20,8 @@ function PharmacyDetails() {
   const { address, isConnecting, isDisconnected } = useAccount();
   const [pharmacyData, setPharmacyData] = useState(null);
 
-  const getFetchPharmacyData = async () => {
+  // Wrap getFetchPharmacyData in useCallback
+  const getFetchPharmacyData = useCallback(async () => {
     try {
       const patientRegisterContract = new ethers.Contract(
         process.env.NEXT_PUBLIC_DEDOCTOR_SMART_CONTRACT || "",
@@ -48,13 +49,13 @@ function PharmacyDetails() {
       console.error("Error fetching pharmacy data:", error);
       toast.error("Failed to fetch pharmacy data.");
     }
-  };
+  }, [pharmacyId, provider, signer]);
 
   useEffect(() => {
     if (pharmacyId) {
       getFetchPharmacyData();
     }
-  }, [pharmacyId]);
+  }, [pharmacyId, getFetchPharmacyData]);
 
   return (
     <div className="px-5 py-5 m-5">
@@ -77,6 +78,7 @@ function PharmacyDetails() {
       <div>
         <ProfileTab />
       </div>
+      <ToastContainer /> {/* Ensure ToastContainer is rendered */}
     </div>
   );
 }

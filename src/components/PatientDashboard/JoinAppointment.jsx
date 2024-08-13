@@ -1,7 +1,7 @@
 import axios from "axios";
 import { ethers } from "ethers";
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { FiUser } from "react-icons/fi";
 import { MdClose } from "react-icons/md";
 import { Dna } from "react-loader-spinner";
@@ -15,7 +15,7 @@ const JoinAppointment = ({ isShowModal, setIsShowModal, activeDoctorId }) => {
   const { address } = useAccount();
   const [doctorData, setDoctorData] = useState();
 
-  const updateData = async () => {
+  const updateData = useCallback(async () => {
     try {
       const patientRegisterContract = new ethers.Contract(
         process.env.NEXT_PUBLIC_DEDOCTOR_SMART_CONTRACT || "",
@@ -45,13 +45,13 @@ const JoinAppointment = ({ isShowModal, setIsShowModal, activeDoctorId }) => {
     } catch (error) {
       console.error("Error fetching doctor data:", error);
     }
-  };
+  }, [activeDoctorId, provider, signer]);
 
   useEffect(() => {
     if (activeDoctorId) {
       updateData();
     }
-  }, [activeDoctorId]);
+  }, [activeDoctorId, updateData]);
 
   return (
     <div className="flex justify-center items-center overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
@@ -90,7 +90,7 @@ const JoinAppointment = ({ isShowModal, setIsShowModal, activeDoctorId }) => {
                 <span className="text-muted dark:text-dark-muted dark:font-semibold">
                   Gender:
                 </span>
-                <span className="modal-heading">{doctorData.gender}</span>
+                <span className="modal-heading">{doctorData.gender?.replace(/'/g, `&#39;`)}</span>
               </div>
               <div className="flex space-x-2 dark:text-dark-muted">
                 <span className="text-muted dark:text-dark-muted dark:font-semibold">
@@ -111,21 +111,11 @@ const JoinAppointment = ({ isShowModal, setIsShowModal, activeDoctorId }) => {
                 href={`https://iframe.huddle01.com/${doctorData.walletAddress}`}
                 target="_blank"
                 className="submit-btn"
-              legacyBehavior >
+                legacyBehavior
+              >
                 Join Meeting
               </Link>
             </div>
-            {/* Uncomment if Chat component is needed */}
-            {/* {address ? (
-              <Chat
-                account="0x6430C47973FA053fc8F055e7935EC6C2271D5174" // user address
-                supportAddress="0xd9c1CCAcD4B8a745e191b62BA3fcaD87229CB26d" // support address
-                apiKey="jVPMCRom1B.iDRMswdehJG7NpHDiECIHwYMMv6k2KzkPJscFIDyW8TtSnk4blYnGa8DIkfuacU0"
-                env="staging"
-              />
-            ) : (
-              ""
-            )} */}
           </div>
         ) : (
           <div className="flex justify-end items-center">

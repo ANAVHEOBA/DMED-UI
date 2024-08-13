@@ -1,14 +1,14 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { NFTStorage } from "nft.storage";
 
 const useNFTStorage = () => {
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState(null);
 
-  // Initialize the NFTStorage client with your token
-  const client = new NFTStorage({
+  // Initialize the NFTStorage client with your token using useMemo
+  const client = useMemo(() => new NFTStorage({
     token: process.env.NEXT_PUBLIC_NFT_STORAGE_API || "",
-  });
+  }), []);
 
   const storeData = useCallback(
     async (data) => {
@@ -25,7 +25,7 @@ const useNFTStorage = () => {
         return null;
       }
     },
-    [client]
+    [client] // `client` is now memoized
   );
 
   const fetchData = useCallback(
@@ -42,7 +42,7 @@ const useNFTStorage = () => {
         return null;
       }
     },
-    [client]
+    [client] // `client` is now memoized
   );
 
   return { storeData, fetchData, isReady, error };

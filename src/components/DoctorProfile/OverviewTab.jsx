@@ -1,5 +1,6 @@
 import React from "react";
 import { BsArrowRight } from "react-icons/bs";
+import Image from 'next/image'; // Importing Image from Next.js for optimization
 
 function OverviewTab() {
   const serviceList = [
@@ -49,9 +50,9 @@ function OverviewTab() {
       </div>
       <div>
         <h5 className="font-medium text-lg dark:text-white">Specialization</h5>
-        <ul className="grid grid-cols-1 md:grid-cols-3">
+        <ul className="grid grid-cols-1 md:grid-cols-3 dark:text-dark-muted">
           {specializationList.map((specializationItem, index) => (
-            <li key={index} className="space-x-2 flex dark:text-dark-muted">
+            <li key={index} className="space-x-2 flex">
               <BsArrowRight className="h-6 w-6" />
               <span>{specializationItem}</span>
             </li>

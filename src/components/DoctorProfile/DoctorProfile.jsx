@@ -2,7 +2,7 @@ import deDoctorABI from "@/constants/constants";
 import generateIpfsMediaLink from "@/utils/generateIpfsLink";
 import axios from "axios";
 import { useRouter } from "next/router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useAccount, useSigner, useProvider } from "wagmi";
 import { ethers } from "ethers";
 import ProfileGeneral from "./ProfileGeneral";
@@ -17,7 +17,8 @@ const DoctorProfile = () => {
   const { data: signer } = useSigner();
   const { address } = useAccount();
 
-  const updateData = async () => {
+  // Define updateData with useCallback to ensure it's stable
+  const updateData = useCallback(async () => {
     const patientRegisterContract = new ethers.Contract(
       process.env.NEXT_PUBLIC_DEDOCTOR_SMART_CONTRACT || "",
       deDoctorABI,
@@ -45,13 +46,13 @@ const DoctorProfile = () => {
     };
 
     setDoctorData(jsonData);
-  };
+  }, [id, provider, signer]); // Ensure dependencies are included
 
   useEffect(() => {
     if (id) {
       updateData();
     }
-  }, [id]);
+  }, [id, updateData]); // Add updateData to dependency array
 
   return (
     <div className="px-5 py-5 m-5">

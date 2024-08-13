@@ -5,6 +5,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 import "swiper/css/scrollbar";
+import Image from "next/image"; // Import the Image component from next/image
 import DoctorCard from "./DoctorCard";
 
 function BookDoctor() {
@@ -107,7 +108,15 @@ function BookDoctor() {
                 id={doctorItem.id}
                 name={doctorItem.name}
                 category={doctorItem.category}
-                image={doctorItem.image}
+                image={
+                  <Image
+                    src={doctorItem.image}
+                    alt={doctorItem.name}
+                    width={500} // Provide appropriate width
+                    height={300} // Provide appropriate height
+                    layout="responsive" // Adjust layout as needed
+                  />
+                }
                 address={doctorItem.address}
                 slotTime={doctorItem.slotTime}
                 chargeStart={doctorItem.chargeStart}

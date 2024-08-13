@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import DoctorAppointments from "./DoctorAppointments";
 import DoctorGeneral from "./DoctorGeneral";
 import axios from "axios";
@@ -16,7 +16,7 @@ function DoctorDashboard() {
   const [doctorData, setDoctorData] = useState();
   const [doctorAppointmentList, setDoctorAppointmentList] = useState();
 
-  const fetchDoctorData = async () => {
+  const fetchDoctorData = useCallback(async () => {
     let patientRegisterContract = new ethers.Contract(
       process.env.NEXT_PUBLIC_DEDOCTOR_SMART_CONTRACT || "",
       deDoctorABI,
@@ -27,39 +27,44 @@ function DoctorDashboard() {
     meta = meta.data;
     let doctorId = traction.doctorId.toString();
     setDoctorData({ ...meta, doctorId });
-  };
+  }, [address, provider, signer]);
 
-  const fetchDoctorAppointments = async () => {
-    let patientRegisterContract = new ethers.Contract(
-      process.env.NEXT_PUBLIC_DEDOCTOR_SMART_CONTRACT || "",
-      deDoctorABI,
-      signer || provider
-    );
-    let traction = await patientRegisterContract.getAppointmentsByDoctorId(doctorData.doctorId);
-    let newItems = await Promise.all(
-      traction.map(async (d) => {
-        return {
-          doctorId: d.doctorId.toString(),
-          patientId: d.patientId.toString(),
-          pastSymptoms: d.pastSymptoms,
-          symptoms: d.symptoms,
-          time: d.time,
-          date: d.date,
-          appointmentId: d.id.toString(),
-        };
-      })
-    );
-    setDoctorAppointmentList(newItems);
-  };
+  const fetchDoctorAppointments = useCallback(async () => {
+    if (doctorData && doctorData.doctorId) {
+      let patientRegisterContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_DEDOCTOR_SMART_CONTRACT || "",
+        deDoctorABI,
+        signer || provider
+      );
+      let traction = await patientRegisterContract.getAppointmentsByDoctorId(doctorData.doctorId);
+      let newItems = await Promise.all(
+        traction.map(async (d) => {
+          return {
+            doctorId: d.doctorId.toString(),
+            patientId: d.patientId.toString(),
+            pastSymptoms: d.pastSymptoms,
+            symptoms: d.symptoms,
+            time: d.time,
+            date: d.date,
+            appointmentId: d.id.toString(),
+          };
+        })
+      );
+      setDoctorAppointmentList(newItems);
+    }
+  }, [doctorData, provider, signer]);
 
   useEffect(() => {
     if (address) {
       fetchDoctorData();
-      if (doctorData && doctorData.doctorId) {
-        fetchDoctorAppointments();
-      }
     }
-  }, [doctorData, address]);
+  }, [address, fetchDoctorData]);
+
+  useEffect(() => {
+    if (doctorData && doctorData.doctorId) {
+      fetchDoctorAppointments();
+    }
+  }, [doctorData, fetchDoctorAppointments]);
 
   return (
     <div className="flex space-x-5 my-8 mx-5">

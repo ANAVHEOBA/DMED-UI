@@ -4,6 +4,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 import "swiper/css/scrollbar";
+import Image from "next/image";
 
 // Function to generate unique keys for categories
 const generateKey = (id, title) => `${id}-${title}`;
@@ -95,10 +96,12 @@ function Categories() {
               <div className="flex flex-col items-center text-center space-y-2">
                 <div className="p-6 shadow-lg rounded-full bg-white dark:bg-dark-card dark:border dark:border-dark-input-border">
                   <div className="relative w-24 h-24">
-                    <img
+                    <Image
                       src={categoryItem.image}
                       alt={categoryItem.title}
-                      className="object-cover w-full h-full rounded-full"
+                      layout="fill"
+                      objectFit="cover"
+                      className="rounded-full"
                     />
                   </div>
                 </div>
@@ -115,3 +118,4 @@ function Categories() {
 }
 
 export default Categories;
+

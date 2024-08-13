@@ -2,55 +2,60 @@ import deDoctorABI from "@/constants/constants";
 import generateIpfsMediaLink from "@/utils/generateIpfsLink";
 import axios from "axios";
 import { ethers } from "ethers";
-import React, { useEffect, useState } from "react";
-import { useContractRead } from "wagmi";
+import React, { useEffect, useState, useCallback } from "react";
+import { useContractRead, useProvider, useSigner, useAccount } from "wagmi";
 import Breadcrumb from "../Breadcrumb/Breadcrumb";
 import LongDoctorCard from "./LongDoctorCard";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useAccount, useSigner } from "wagmi";
-import { useProvider } from "wagmi";
 import { Dna } from "react-loader-spinner";
 
 function Doctors() {
   const provider = useProvider();
-  const { data: signer, isError, isLoading } = useSigner();
+  const { data: signer } = useSigner();
   const { address, isConnecting, isDisconnected } = useAccount();
 
   const [doctorData, setDoctorData] = useState([]);
-  
-  const updateData = async () => {
-    let patientRegisterContract = new ethers.Contract(
-      process.env.NEXT_PUBLIC_DEDOCTOR_SMART_CONTRACT || "",
-      deDoctorABI,
-      signer || provider
-    );
-    let traction = await patientRegisterContract.getAllDoctors();
-    const data = traction;
-    let newItems = await Promise.all(
-      data.map(async (d) => {
-        let meta = await axios.get(d.profileURI);
-        meta = meta.data;
-        return {
-          name: meta.name,
-          category: meta.specialization,
-          image: generateIpfsMediaLink(meta.image),
-          address: meta.address,
-          chargeStart: meta.minAmount,
-          chargeEnd: 0,
-          slotTime: "",
-          city: meta.city,
-          state: meta.state,
-          id: d.doctorId.toString(),
-        };
-      })
-    );
-    setDoctorData(newItems);
-  };
+
+  const updateData = useCallback(async () => {
+    try {
+      const patientRegisterContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_DEDOCTOR_SMART_CONTRACT || "",
+        deDoctorABI,
+        signer || provider
+      );
+      const traction = await patientRegisterContract.getAllDoctors();
+      const data = traction;
+
+      const newItems = await Promise.all(
+        data.map(async (d) => {
+          const meta = await axios.get(d.profileURI);
+          const metaData = meta.data;
+          return {
+            name: metaData.name,
+            category: metaData.specialization,
+            image: generateIpfsMediaLink(metaData.image),
+            address: metaData.address,
+            chargeStart: metaData.minAmount,
+            chargeEnd: 0,
+            slotTime: "",
+            city: metaData.city,
+            state: metaData.state,
+            id: d.doctorId.toString(),
+          };
+        })
+      );
+
+      setDoctorData(newItems);
+    } catch (error) {
+      console.error("Error fetching doctor data:", error);
+      toast.error("Failed to load doctor data.");
+    }
+  }, [provider, signer]);
 
   useEffect(() => {
     updateData();
-  }, []);
+  }, [updateData]);
 
   return (
     <div>
