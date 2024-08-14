@@ -3,55 +3,68 @@ import Footer from "@/components/Footer/Footer";
 import Navbar from "@/components/Navbar";
 import "@/styles/globals.css";
 import "@rainbow-me/rainbowkit/styles.css";
-import { getDefaultWallets, RainbowKitProvider, lightTheme, darkTheme } from "@rainbow-me/rainbowkit";
+import { RainbowKitProvider, lightTheme, darkTheme, getDefaultWallets } from "@rainbow-me/rainbowkit";
 import { configureChains, createClient, WagmiConfig } from "wagmi";
 import { publicProvider } from "wagmi/providers/public";
 import { Provider } from "react-redux";
 import { store } from "@/store";
 import { ThemeProvider, useTheme } from "next-themes";
-import { PhantomWalletAdapter } from "@solana/wallet-adapter-wallets";
-import { okxWallet, bybitWallet } from '@rainbow-me/rainbowkit/wallets';
+import WeaveDB from "weavedb-sdk";
+import { getHuddleClient, HuddleClientProvider } from "@huddle01/huddle01-client";
+import { metaMaskWallet, coinbaseWallet } from "@rainbow-me/rainbowkit/wallets"; // Import Wallets
 import { useEffect, useState } from "react";
+import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
 
-// Define Solana Chain
-const solanaChain = {
-  id: 101,
-  name: "Solana Mainnet",
-  network: "solana",
+// Initialize Huddle Client
+const huddleClient = getHuddleClient(
+  "1bc609a2c914912b57e4f3da0fdfc25e06fd643a87f3afe7dd159458b19fb412"
+);
+
+// Define Shardeum Chain
+const shardeumChain = {
+  id: 11155111,
+  name: "Shardeum Liberty 2.X",
+  network: "sepolia",
   nativeCurrency: {
-    decimals: 9,
-    name: "Solana",
-    symbol: "SOL",
+    decimals: 18,
+    name: "Sepolia",
+    symbol: "Sep",
   },
   rpcUrls: {
     default: {
-      http: ["https://api.mainnet-beta.solana.com"],
+      http: ["https://sepolia.gateway.tenderly.co"],
+    },
+    public: {
+      http: ["https://sepolia.gateway.tenderly.co"],
     },
   },
   blockExplorers: {
     default: {
-      name: "Solana Explorer",
-      url: "https://explorer.solana.com",
+      name: "SnowTrace",
+      url: "https://sepolia.etherscan.io/",
     },
   },
-  testnet: false,
+  testnet: true,
 };
 
 // Configure Chains and Providers
 const { chains, provider } = configureChains(
-  [solanaChain],
+  [shardeumChain],
   [publicProvider()]
 );
 
-const { connectors } = getDefaultWallets({
+// Initialize connectors with custom and default wallets
+const { connectors: defaultConnectors } = getDefaultWallets({
   appName: "DeDoctor",
   chains,
-  connectors: () => [
-    new PhantomWalletAdapter(),
-    okxWallet(),
-    bybitWallet(),
-  ],
 });
+
+const connectors = () => [
+  new PhantomWalletAdapter(), // For Solana
+  metaMaskWallet({ chains }), // Initialize MetaMask Wallet with chains
+  coinbaseWallet({ chains }), // Initialize Coinbase Wallet with chains
+  ...defaultConnectors(), // Spread the default connectors
+];
 
 const wagmiClient = createClient({
   autoConnect: true,
@@ -61,6 +74,19 @@ const wagmiClient = createClient({
 
 export default function App({ Component, pageProps }) {
   const { theme } = useTheme();
+  const [weaveDB, setWeaveDB] = useState(null);
+
+  useEffect(() => {
+    // Initialize WeaveDB
+    const initWeaveDB = async () => {
+      console.log("Contract TX ID:", process.env.NEXT_PUBLIC_WEAVEDB_CONTRACT_TX_ID);
+      const db = new WeaveDB({ contractTxId: process.env.NEXT_PUBLIC_WEAVEDB_CONTRACT_TX_ID });
+      await db.init();
+      setWeaveDB(db);
+    };
+
+    initWeaveDB();
+  }, []);
 
   return (
     <div className="dark:bg-[#030B29] dark:text-dark-muted">
@@ -88,13 +114,17 @@ export default function App({ Component, pageProps }) {
         <link rel="apple-touch-icon" href="/logo-no-background.svg" />
       </Head>
       <ThemeProvider enableSystem={true} attribute="class">
-        <WagmiConfig client={wagmiClient}>
-          <RainbowKitProvider chains={chains} theme={theme === 'light' ? lightTheme() : darkTheme()}>
-            <Navbar />
-            <Component {...pageProps} />
-            <Footer />
-          </RainbowKitProvider>
-        </WagmiConfig>
+        <HuddleClientProvider value={huddleClient}>
+          <Provider store={store}>
+            <WagmiConfig client={wagmiClient}>
+              <RainbowKitProvider chains={chains} theme={theme === 'light' ? lightTheme() : darkTheme()}>
+                <Navbar />
+                <Component {...pageProps} />
+                <Footer />
+              </RainbowKitProvider>
+            </WagmiConfig>
+          </Provider>
+        </HuddleClientProvider>
       </ThemeProvider>
     </div>
   );
