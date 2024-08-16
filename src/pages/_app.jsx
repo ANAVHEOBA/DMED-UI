@@ -14,6 +14,11 @@ import { getHuddleClient, HuddleClientProvider } from "@huddle01/huddle01-client
 import { metaMaskWallet, coinbaseWallet } from "@rainbow-me/rainbowkit/wallets"; // Import Wallets
 import { useEffect, useState } from "react";
 import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
+import FileUpload from '../components/FileUpload';
+
+
+
+
 
 // Initialize Huddle Client
 const huddleClient = getHuddleClient(

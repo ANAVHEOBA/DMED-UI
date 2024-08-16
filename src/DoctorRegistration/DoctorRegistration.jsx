@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import DoctorVerification from "./DoctorVerification";
 import PersonalDetailsForm from "./PersonalDetailsForm";
 import Preferences from "./Preferences";
@@ -8,16 +8,40 @@ import { updateStep } from "@/features/doctorStepSlice";
 import { useAccount, useSigner, useProvider } from "wagmi";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { NFTStorage, File } from "nft.storage";
-import deDoctorABI from "@/constants/constants";
 import { ethers } from "ethers";
+import Tesseract from 'tesseract.js';
+import deDoctorABI from "@/constants/constants";
+// @ts-ignore
+import WeaveDB from 'weavedb-sdk';
+import { ColorRing } from "react-loader-spinner";
+
+const WEAVEDB_CONTRACT_TX_ID = "DznefHbFhcyqyjZ0aNGqsWwkjcwRDlraUR72EkXames";
+
+function SuccessPopup({ isVisible, onClose, transactionId }) {
+  if (!isVisible) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-xl">
+        <h2 className="text-xl font-bold mb-4">Registration Successful!</h2>
+        <p>Your doctor profile has been registered successfully.</p>
+        <p className="mt-2">Transaction ID: {transactionId}</p>
+        <button 
+          onClick={onClose}
+          className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
 
 const DoctorRegistration = () => {
   const { address } = useAccount();
   const doctorStep = useSelector((state) => state.doctorStep.value);
   const dispatch = useDispatch();
-  
-  // Personal Data
+
   const [personalData, setPersonalData] = useState({
     name: "",
     about: "",
@@ -28,22 +52,16 @@ const DoctorRegistration = () => {
     state: "",
   });
   const [userImage, setUserImage] = useState(null);
-  
-  // Identification Data
   const [identificationData, setIdentificationData] = useState({
     docNumber: "",
     docType: "",
   });
   const [identificationDoc, setIdentificationDoc] = useState(null);
-  
-  // Doctor Verification
   const [medicalCouncilData, setMedicalCouncilData] = useState({
     councilNumber: "",
     specialization: "",
   });
   const [councilFile, setCouncilFile] = useState(null);
-  
-  // Preferences
   const [preference, setPreference] = useState({
     minAmount: 0,
     callType: [""],
@@ -54,76 +72,134 @@ const DoctorRegistration = () => {
     endTime: "",
   });
 
+  const [weaveDB, setWeaveDB] = useState(null);
   const { data: signer } = useSigner();
   const provider = useProvider();
+  const [loading, setLoading] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [transactionId, setTransactionId] = useState("");
 
-  const submitIpfs = async () => {
+  useEffect(() => {
+    const initWeaveDB = async () => {
+      const db = new WeaveDB({ contractTxId: WEAVEDB_CONTRACT_TX_ID });
+      await db.init();
+      setWeaveDB(db);
+    };
+    initWeaveDB();
+  }, []);
+
+  const uploadToAkord = async (file) => {
+    if (!file) return null;
+
+    const arrayBuffer = await file.arrayBuffer();
+
     try {
-      const nftStorage = new NFTStorage({
-        token: process.env.NEXT_PUBLIC_NFT_STORAGE_API || "",
+      const response = await fetch('https://api.akord.com/files', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Api-Key': process.env.NEXT_PUBLIC_AKORD_API || "",
+          'Content-Type': file.type,
+        },
+        body: arrayBuffer,
       });
-      const link = await nftStorage.store({
-        image: userImage,
-        name: personalData.name,
-        description: personalData.about || "",
-        about: personalData.about || "",
-        address: personalData.address,
-        city: personalData.city,
-        dob: personalData.dob,
-        gender: personalData.gender,
-        state: personalData.state,
-        docNumber: identificationData.docNumber,
-        docType: identificationData.docType,
-        identificationDoc: identificationDoc,
-        councilNumber: medicalCouncilData.councilNumber,
-        specialization: medicalCouncilData.specialization,
-        councilFile: councilFile,
-        minAmount: preference.minAmount,
-        callType: preference.callType,
-        date: preference.date,
-        days: preference.days,
-        startTime: preference.startTime,
-        language: preference.language,
-        endTime: preference.endTime,
-      });
-      const ipfsURL = `https://ipfs.io/ipfs/${link.url.substr(7)}`;
-      const price = ethers.utils.parseUnits(preference.minAmount.toString(), "ether");
-      const patientRegisterContract = new ethers.Contract(
-        process.env.NEXT_PUBLIC_DEDOCTOR_SMART_CONTRACT || "",
-        deDoctorABI,
-        signer || provider
-      );
-      const transaction = await patientRegisterContract.registerDoctor(
-        personalData.name,
-        personalData.gender,
-        personalData.city,
-        preference.language,
-        address,
-        price,
-        ipfsURL
-      );
-      await transaction.wait();
-      toast.success("Doctor registered successfully!", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "light",
-      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result.id || result.fileId;
     } catch (error) {
-      toast.error(error.message, {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "light",
+      toast.error('Error uploading file: ' + error.message);
+      console.error('Error details:', error);
+      return null;
+    }
+  };
+
+  const fetchImageAsBlob = async (url) => {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.statusText}`);
+    }
+    return await response.blob();
+  };
+
+  const processImageWithTesseract = async (imageUrl) => {
+    try {
+      const imageBlob = await fetchImageAsBlob(imageUrl);
+      const { data: { text } } = await Tesseract.recognize(imageBlob, 'eng', {
+        logger: m => console.log(m)
       });
+      return text;
+    } catch (error) {
+      console.error('Tesseract OCR error:', error);
+      return '';
+    }
+  };
+
+  const submitAkord = async () => {
+    if (!userImage) {
+      toast.error("Please upload an image.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const [userImageId, identificationDocId, councilFileId] = await Promise.all([
+        uploadToAkord(userImage),
+        uploadToAkord(identificationDoc),
+        uploadToAkord(councilFile),
+      ]);
+
+      const [userImageText, identificationDocText, councilFileText] = await Promise.all([
+        processImageWithTesseract(`https://api.akord.com/files/${userImageId}`),
+        processImageWithTesseract(`https://api.akord.com/files/${identificationDocId}`),
+        processImageWithTesseract(`https://api.akord.com/files/${councilFileId}`),
+      ]);
+
+      if (weaveDB) {
+        await weaveDB.add({
+          personalData,
+          userImageId,
+          userImageText,
+          identificationData,
+          identificationDocId,
+          identificationDocText,
+          medicalCouncilData,
+          councilFileId,
+          councilFileText,
+          preference,
+          walletAddress: address,
+        }, 'anavheoba');
+
+        const price = ethers.utils.parseUnits(preference.minAmount.toString(), "ether");
+        const patientRegisterContract = new ethers.Contract(
+          process.env.NEXT_PUBLIC_DEDOCTOR_SMART_CONTRACT || "",
+          deDoctorABI,
+          signer || provider
+        );
+        const transaction = await patientRegisterContract.registerDoctor(
+          personalData.name,
+          personalData.gender,
+          personalData.city,
+          preference.language,
+          address,
+          price,
+          userImageId
+        );
+        const tx = await transaction.wait();
+
+        setTransactionId(tx.transactionHash);
+        setShowSuccessPopup(true);
+      } else {
+        toast.error("WeaveDB is not initialized.");
+      }
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -175,7 +251,7 @@ const DoctorRegistration = () => {
         <Preferences
           preference={preference}
           setPreference={setPreference}
-          submitIpfs={submitIpfs}
+          submitAkord={submitAkord}
         />
       ),
     },
@@ -206,8 +282,37 @@ const DoctorRegistration = () => {
             </div>
           ))}
         </div>
-        <div className="w-full">{registrationSteps[doctorStep].component}</div>
+        <div className="w-full">
+          {registrationSteps[doctorStep].component}
+          {doctorStep === 3 && (
+            <button
+              className="submit-btn flex space-x-2 items-center h-14"
+              onClick={submitAkord}
+              disabled={loading}
+            >
+              {loading ? (
+                <ColorRing
+                  visible={true}
+                  height="40"
+                  width="40"
+                  ariaLabel="blocks-loading"
+                  wrapperStyle={{}}
+                  wrapperClass="blocks-wrapper"
+                  colors={["#e15b64", "#f47e60", "#f8b26a", "#abbd81", "#849b87"]}
+                />
+              ) : (
+                ""
+              )}
+              <span>Register Doctor</span>
+            </button>
+          )}
+        </div>
       </div>
+      <SuccessPopup 
+        isVisible={showSuccessPopup} 
+        onClose={() => setShowSuccessPopup(false)}
+        transactionId={transactionId}
+      />
     </div>
   );
 };

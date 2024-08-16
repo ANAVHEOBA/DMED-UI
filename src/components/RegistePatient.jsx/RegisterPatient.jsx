@@ -3,11 +3,38 @@ import { useAccount, useProvider, useSigner } from "wagmi";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ColorRing } from "react-loader-spinner";
-import { storeDataOnIPFS, saveDataToWeaveDB, initializeWeaveDB } from "@/utils/weaveDBUtils";
+import { ethers } from "ethers";
+import deDoctorABI from "@/constants/constants";
+import Tesseract from 'tesseract.js';
+// @ts-ignore
+import WeaveDB from 'weavedb-sdk';
+
+
+const WEAVEDB_CONTRACT_TX_ID = "DznefHbFhcyqyjZ0aNGqsWwkjcwRDlraUR72EkXames";
+
+function SuccessPopup({ isVisible, onClose }) {
+  if (!isVisible) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-xl">
+        <h2 className="text-xl font-bold mb-4">Registration Successful!</h2>
+        <p>Your information has been saved successfully.</p>
+        <button 
+          onClick={onClose}
+          className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function RegisterPatient() {
   const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [patientData, setPatientData] = useState({
     name: "",
     gender: "male",
@@ -18,7 +45,7 @@ function RegisterPatient() {
     country: "",
     description: "",
   });
-  const [weaveDB, setWeaveDB] = useState(null);
+  const [db, setDb] = useState(null);
 
   const provider = useProvider();
   const { data: signer } = useSigner();
@@ -26,29 +53,66 @@ function RegisterPatient() {
 
   useEffect(() => {
     const initWeaveDB = async () => {
-      const db = await initializeWeaveDB();
-      setWeaveDB(db);
+      const weaveDB = new WeaveDB({ contractTxId: WEAVEDB_CONTRACT_TX_ID });
+      await weaveDB.init();
+      setDb(weaveDB);
     };
-
     initWeaveDB();
   }, []);
 
   const onSubmitHandle = async () => {
-    if (!weaveDB) {
-      toast.error("WeaveDB is not initialized.");
+    if (!image) {
+      toast.error("Please upload an image.");
       return;
+    }
+
+    const requiredFields = ['name', 'gender', 'dob', 'address', 'city', 'state', 'country'];
+    for (let field of requiredFields) {
+      if (!patientData[field]) {
+        toast.error(`Please fill in the ${field} field.`);
+        return;
+      }
     }
 
     try {
       setLoading(true);
-      const ipfsURL = await storeDataOnIPFS({ ...patientData, image });
-      
-      // Save data to WeaveDB
-      await saveDataToWeaveDB(weaveDB, {
-        name: patientData.name,
-        ipfsURL,
-        ...patientData,
+
+      const formData = new FormData();
+      formData.append('file', image);
+
+      const uploadResponse = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
       });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`HTTP error! status: ${uploadResponse.status}`);
+      }
+
+      const uploadResult = await uploadResponse.json();
+      const fileUrl = uploadResult.cloud.url;
+
+      const fileResponse = await fetch(fileUrl);
+      const fileBlob = await fileResponse.blob();
+
+      const { data: { text } } = await Tesseract.recognize(fileBlob, 'eng', {
+        logger: m => console.log(m)
+      });
+
+      // Save data to WeaveDB
+      await db.add({
+        name: patientData.name,
+        gender: patientData.gender,
+        dob: patientData.dob,
+        address: patientData.address,
+        city: patientData.city,
+        state: patientData.state,
+        country: patientData.country,
+        description: patientData.description,
+        imageUrl: fileUrl,
+        extractedText: text,
+        walletAddress: address,
+      }, 'anavheoba');
 
       let patientRegisterContract = new ethers.Contract(
         process.env.NEXT_PUBLIC_DEDOCTOR_SMART_CONTRACT || "",
@@ -56,35 +120,20 @@ function RegisterPatient() {
         signer || provider
       );
 
-      let traction = await patientRegisterContract.registerPatient(
+      let transaction = await patientRegisterContract.registerPatient(
         patientData.name,
         address,
         patientData.gender,
         patientData.city,
-        ipfsURL
+        fileUrl
       );
-      await traction.wait();
+      await transaction.wait();
+
       setLoading(false);
-      toast.success("Registration successful!", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        theme: "light",
-      });
+      setShowSuccessPopup(true);
     } catch (error) {
       setLoading(false);
-      toast.error(error.message, {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        theme: "light",
-      });
+      toast.error(`Error: ${error.message}`);
     }
   };
 
@@ -296,6 +345,10 @@ function RegisterPatient() {
           </button>
         </div>
       </div>
+      <SuccessPopup 
+        isVisible={showSuccessPopup} 
+        onClose={() => setShowSuccessPopup(false)}
+      />
     </div>
   );
 }

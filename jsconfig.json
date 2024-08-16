@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "noImplicitAny": false,
     "target": "es5",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
@@ -18,6 +19,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.js", "**/*.js", "src/store.js", "src/utils/shortAddress.js", "src/utils/generateIpfsLink.js", "src/hooks/useSmartContract.js", "src/hooks/usePaitnetRegister.js", "src/hooks/useipfsStore.js", "src/hooks/useFetchPatient.js", "src/hooks/storeIpfs.js", "src/hooks/pharmacyStoreIpfs.js", "src/features/pharmacyStepSlice.js", "src/features/doctorStepSlice.js"],
+  "include": ["next-env.d.js", "**/*.js", "src/store.js", "src/utils/shortAddress.js", "src/utils/generateIpfsLink.js", "src/hooks/useSmartContract.js", "src/hooks/usePaitnetRegister.js", "src/hooks/useipfsStore.js", "src/hooks/useFetchPatient.js", "src/hooks/storeIpfs.js", "src/hooks/pharmacyStoreIpfs.js", "src/features/pharmacyStepSlice.js", "src/features/doctorStepSlice.js", "src/components/FileUploader.jsx"],
   "exclude": ["node_modules"]
 }

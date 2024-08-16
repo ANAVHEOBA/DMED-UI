@@ -1,24 +1,46 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useAccount, useProvider, useSigner } from "wagmi";
-import { NFTStorage, File } from "nft.storage";
 import { ethers } from "ethers";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { ColorRing } from "react-loader-spinner";
 import deDoctorABI from "@/constants/constants";
 import { pharmacyUpdateStep } from "@/features/pharmacyStepSlice";
-import usePharmacyIPFs from "@/hooks/pharmacyStoreIpfs";
 import OwnerDetails from "./OwnerDetails";
 import PharmacyPersonal from "./PharmacyPersonal";
 import PharmacyVerification from "./PharmacyVerification";
 import PreferencePharmacy from "./PreferencePharmacy";
-import { storeDataOnIPFS, saveDataToWeaveDB, initializeWeaveDB } from "@/utils/pharmacyUtils";
+import Tesseract from 'tesseract.js';
+// @ts-ignore
+import WeaveDB from 'weavedb-sdk';
+
+const WEAVEDB_CONTRACT_TX_ID = "DznefHbFhcyqyjZ0aNGqsWwkjcwRDlraUR72EkXames";
+
+function SuccessPopup({ isVisible, onClose, transactionId }) {
+  if (!isVisible) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-xl">
+        <h2 className="text-xl font-bold mb-4">Registration Successful!</h2>
+        <p>Your pharmacy has been registered successfully.</p>
+        <p className="mt-2">Transaction ID: {transactionId}</p>
+        <button 
+          onClick={onClose}
+          className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
 
 const RegisterPharmacy = () => {
   const doctorStep = useSelector((state) => state.pharmacyStep.value);
   const dispatch = useDispatch();
 
-  // Pharmacy Data
   const [pharmacyPersonaData, setPharmacyPersonalData] = useState({
     name: "",
     address: "",
@@ -28,7 +50,6 @@ const RegisterPharmacy = () => {
   });
   const [pharmacyImage, setPharmacyImage] = useState(null);
 
-  // Pharmacy Owner data
   const [pharmacyOwnerData, setPharmacyOwnerData] = useState({
     name: "",
     gender: "",
@@ -39,14 +60,12 @@ const RegisterPharmacy = () => {
   });
   const [pharmacyOwnerImage, setPharmacyOwnerImage] = useState(null);
 
-  // Pharmacy Verification
   const [pharmacyVerificationData, setPharmacyVerificationData] = useState({
     councilNumber: "",
     medicineSpecialization: "",
   });
   const [pharmacyVerificationDoc, setPharmacyVerificationDoc] = useState(null);
 
-  // Pharmacy Preference
   const [pharmacyPreferenceData, setPharmacyPreferenceData] = useState({
     openDays: [],
     startTime: "",
@@ -58,14 +77,64 @@ const RegisterPharmacy = () => {
   const { data: signer } = useSigner();
   const { address } = useAccount();
 
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [transactionId, setTransactionId] = useState("");
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     const initWeaveDB = async () => {
-      const db = await initializeWeaveDB();
+      const db = new WeaveDB({ contractTxId: WEAVEDB_CONTRACT_TX_ID });
+      await db.init();
       setWeaveDB(db);
     };
-
     initWeaveDB();
   }, []);
+
+  const uploadToAkord = async (file) => {
+    if (!file) return null;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result.cloud.url;
+    } catch (error) {
+      toast.error('Error uploading file: ' + error.message);
+      console.error('Error details:', error);
+      return null;
+    }
+  };
+
+  const fetchImageAsBlob = async (url) => {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.statusText}`);
+    }
+    return await response.blob();
+  };
+
+  const processImageWithTesseract = async (imageUrl) => {
+    try {
+      const imageBlob = await fetchImageAsBlob(imageUrl);
+      const { data: { text } } = await Tesseract.recognize(imageBlob, 'eng', {
+        logger: m => console.log(m)
+      });
+      return text;
+    } catch (error) {
+      console.error('Tesseract OCR error:', error);
+      return '';
+    }
+  };
 
   const onSubmitPharmacy = async () => {
     if (!weaveDB) {
@@ -73,38 +142,41 @@ const RegisterPharmacy = () => {
       return;
     }
 
+    setLoading(true);
+
     try {
-      const ipfsURL = await storeDataOnIPFS({
-        image: pharmacyImage,
-        name: pharmacyPersonaData.name,
-        description: pharmacyPersonaData.about || "",
-        address: pharmacyPersonaData.address,
-        city: pharmacyPersonaData.city,
-        state: pharmacyPersonaData.state,
-        ownerImage: pharmacyOwnerImage,
-        ownerName: pharmacyOwnerData.name,
-        gender: pharmacyOwnerData.gender,
-        dob: pharmacyOwnerData.dob,
-        ownerCity: pharmacyOwnerData.city,
-        ownerState: pharmacyOwnerData.state,
-        ownerAbout: pharmacyOwnerData.about,
-        pharmacyVerificationDoc: pharmacyVerificationDoc,
-        councilNumber: pharmacyVerificationData.councilNumber,
-        medicineSpecialization: pharmacyVerificationData.medicineSpecialization,
-        openDays: pharmacyPreferenceData.openDays,
-        startTime: pharmacyPreferenceData.startTime,
-        endTime: pharmacyPreferenceData.endTime,
-      });
+      const [pharmacyImageUrl, ownerImageUrl, verificationDocUrl] = await Promise.all([
+        uploadToAkord(pharmacyImage),
+        uploadToAkord(pharmacyOwnerImage),
+        uploadToAkord(pharmacyVerificationDoc),
+      ]);
+
+      const [pharmacyImageText, ownerImageText, verificationDocText] = await Promise.all([
+        processImageWithTesseract(pharmacyImageUrl),
+        processImageWithTesseract(ownerImageUrl),
+        processImageWithTesseract(verificationDocUrl),
+      ]);
 
       // Save data to WeaveDB
-      await saveDataToWeaveDB(weaveDB, {
-        name: pharmacyPersonaData.name,
-        city: pharmacyPersonaData.city,
-        ownerName: pharmacyOwnerData.name,
-        address: address,
-        councilNumber: pharmacyVerificationData.councilNumber,
-        ipfsURL,
-      });
+      await weaveDB.add({
+        pharmacyData: {
+          ...pharmacyPersonaData,
+          imageUrl: pharmacyImageUrl,
+          imageText: pharmacyImageText,
+        },
+        ownerData: {
+          ...pharmacyOwnerData,
+          imageUrl: ownerImageUrl,
+          imageText: ownerImageText,
+        },
+        verificationData: {
+          ...pharmacyVerificationData,
+          docUrl: verificationDocUrl,
+          docText: verificationDocText,
+        },
+        preferenceData: pharmacyPreferenceData,
+        walletAddress: address,
+      }, 'anavheoba');
 
       let patientRegisterContract = new ethers.Contract(
         process.env.NEXT_PUBLIC_DEDOCTOR_SMART_CONTRACT || "",
@@ -112,25 +184,18 @@ const RegisterPharmacy = () => {
         signer || provider
       );
 
-      let traction = await patientRegisterContract.registerPharmacy(
+      let transaction = await patientRegisterContract.registerPharmacy(
         pharmacyPersonaData.name,
         pharmacyPersonaData.city,
         pharmacyOwnerData.name,
         address,
         pharmacyVerificationData.councilNumber,
-        ipfsURL
+        pharmacyImageUrl
       );
-      let tx = await traction.wait();
+      let tx = await transaction.wait();
 
-      toast.success("Pharmacy Registered Successfully", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        theme: "light",
-      });
+      setTransactionId(tx.transactionHash);
+      setShowSuccessPopup(true);
     } catch (error) {
       toast.error(error.message, {
         position: "top-right",
@@ -141,6 +206,8 @@ const RegisterPharmacy = () => {
         draggable: true,
         theme: "light",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -227,8 +294,37 @@ const RegisterPharmacy = () => {
             </div>
           ))}
         </div>
-        <div className="w-full">{registrationSteps[doctorStep].component}</div>
+        <div className="w-full">
+          {registrationSteps[doctorStep].component}
+          {doctorStep === 3 && (
+            <button
+              className="submit-btn flex space-x-2 items-center h-14"
+              onClick={onSubmitPharmacy}
+              disabled={loading}
+            >
+              {loading ? (
+                <ColorRing
+                  visible={true}
+                  height="40"
+                  width="40"
+                  ariaLabel="blocks-loading"
+                  wrapperStyle={{}}
+                  wrapperClass="blocks-wrapper"
+                  colors={["#e15b64", "#f47e60", "#f8b26a", "#abbd81", "#849b87"]}
+                />
+              ) : (
+                ""
+              )}
+              <span>Register Pharmacy</span>
+            </button>
+          )}
+        </div>
       </div>
+      <SuccessPopup 
+        isVisible={showSuccessPopup} 
+        onClose={() => setShowSuccessPopup(false)}
+        transactionId={transactionId}
+      />
     </div>
   );
 };
