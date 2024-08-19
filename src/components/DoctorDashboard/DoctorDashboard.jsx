@@ -3,7 +3,6 @@ import DoctorAppointments from "./DoctorAppointments";
 import DoctorGeneral from "./DoctorGeneral";
 import { WeaveDB } from "weavedb-sdk"; 
 import { Dna } from "react-loader-spinner";
-import useAccount from "@/hooks/useAccount"; // Import your custom hook
 
 function DoctorDashboard() {
   const { address } = useAccount();
