@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import DoctorAppointments from "./DoctorAppointments";
 import DoctorGeneral from "./DoctorGeneral";
-import { WeaveDB } from "weavedb"; 
+import { WeaveDB } from "weavedb-sdk"; 
 import { Dna } from "react-loader-spinner";
 import useAccount from "@/hooks/useAccount"; // Import your custom hook
 
