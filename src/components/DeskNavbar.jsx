@@ -4,6 +4,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { MdOutlineDarkMode, MdLightMode } from "react-icons/md";
 import Image from "next/image"; // Import Image from next/image for better performance
 import Link from "next/link";
+import { Chat } from "@pushprotocol/uiweb";
 
 function DeskNavbar() {
   // List of navigation items
@@ -12,6 +13,8 @@ function DeskNavbar() {
     { id: 2, name: "Doctors", url: "/doctors" },
     { id: 3, name: "Pharmacy", url: "/pharmacies" },
     { id: 4, name: "Register/Login", url: "/register" },
+    { id: 5, name: "Profile", url: "/q" },
+    { id: 6, name: "Chat", url: "/Chat" },
   ];
 
   // Use theme hook for theme management

@@ -1,5 +1,4 @@
 import deDoctorABI from "@/constants/constants";
-import generateIpfsMediaLink from "@/utils/generateIpfsLink";
 import axios from "axios";
 import { ethers } from "ethers";
 import React, { useEffect, useState, useCallback } from "react";

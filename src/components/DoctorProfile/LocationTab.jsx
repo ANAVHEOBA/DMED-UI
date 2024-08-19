@@ -1,5 +1,6 @@
 import React from "react";
-import { GoLocation } from "react-icons/go";
+import { GoLocation, GoThumbsup } from "react-icons/go";
+
 
 function LocationTab() {
   const timeSlot = [
@@ -20,14 +21,14 @@ function LocationTab() {
       {/* Left - about */}
       <div className="space-y-3">
         <h5 className="text-lg font-semibold dark:text-white">
-          Smile Cute Dental Care Center
+          UBTH
         </h5>
         <p className="text-[#757575] dark:text-dark-muted">
           MDS - Periodontology and Oral Implantology, BDS
         </p>
         <div className="flex items-center space-x-2 text-[#757575] dark:text-dark-muted">
           <GoLocation className="h-6 w-6" />
-          <span>2286 Sundown Lane, Austin, Texas 78749, USA</span>
+          <span>Ugbowo, UBTH, BENIN, EDO, Nigeria</span>
         </div>
       </div>
       {/* Center - time slot */}

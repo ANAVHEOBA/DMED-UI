@@ -8,14 +8,17 @@ import {
   BsFillCameraVideoFill,
 } from "react-icons/bs";
 import { BiMoney, BiChat } from "react-icons/bi";
+import { useRouter } from "next/router";
 
-const ProfileGeneral = ({ doctorData }) => {
+const ProfileGeneral = (props) => {
+  const { doctorData } = props;
+
   return (
     <div className="flex flex-col md:flex-row space-y-3 justify-between px-5 py-5 border border-[#f0f0f0] rounded-lg dark:border-dark-input-border dark:bg-dark-card">
       {/* Left Side Profile general */}
       <div className="flex flex-col md:flex-row space-x-2 mx-auto md:mx-0">
         <div className="relative h-48 w-48">
-          <Image src={doctorData.image} alt="Doctor" fill />
+          <Image src={doctorData.image} alt="Anavheoba" fill />
         </div>
         <div className="space-y-2">
           <h5 className="text-lg font-medium text-[#272b41] dark:text-white">
@@ -27,7 +30,7 @@ const ProfileGeneral = ({ doctorData }) => {
           <p className="text-primary-blue dark:text-primary-yellow">Dentist</p>
           <div className="flex space-x-2 text-[#757575] items-center dark:text-dark-muted">
             <GoLocation className="h-6 w-6" />
-            <span> {doctorData.address}</span>
+            <span>{doctorData.address}</span>
           </div>
         </div>
       </div>
@@ -52,8 +55,7 @@ const ProfileGeneral = ({ doctorData }) => {
           <div className="flex space-x-2 items-center">
             <BiMoney className="h-6 w-6" />
             <span>
-              <span className="font-semibold">{doctorData.chargeStart}</span> SH
-              per hour
+              <span className="font-semibold">{doctorData.chargeStart}</span> SH per hour
             </span>
           </div>
         </div>

@@ -12,6 +12,9 @@ function MobileNavBar() {
     { id: 1, name: "Home", url: "/" },
     { id: 2, name: "Doctors", url: "/doctors" },
     { id: 3, name: "Pharmacy", url: "/pharmacy" },
+    { id: 4, name: "Register/Login", url: "/register" },
+    { id: 5, name: "Register/Login", url: "/q" },
+    { id: 6, name: "Chat", url: "/Chat" },
   ];
 
   // Toggle the visibility of the navigation menu

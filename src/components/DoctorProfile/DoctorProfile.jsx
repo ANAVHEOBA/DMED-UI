@@ -1,12 +1,13 @@
 import deDoctorABI from "@/constants/constants";
-import generateIpfsMediaLink from "@/utils/generateIpfsLink";
 import axios from "axios";
 import { useRouter } from "next/router";
 import React, { useEffect, useState, useCallback } from "react";
-import { useAccount, useSigner, useProvider } from "wagmi";
-import { ethers } from "ethers";
 import ProfileGeneral from "./ProfileGeneral";
 import ProfileTab from "./ProfileTab";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useAccount, useSigner, useProvider } from "wagmi";
+import { ethers } from "ethers";
 import { Dna } from "react-loader-spinner";
 
 const DoctorProfile = () => {
@@ -32,7 +33,7 @@ const DoctorProfile = () => {
     const jsonData = {
       name: meta.name,
       specialization: meta.specialization,
-      image: generateIpfsMediaLink(meta.image),
+      image: 'src/public/ADOC.png', // Correct path to the image in the public directory
       address: meta.address,
       chargeStart: meta.minAmount,
       chargeEnd: 0,
@@ -58,7 +59,12 @@ const DoctorProfile = () => {
     <div className="px-5 py-5 m-5">
       <div>
         {doctorData ? (
-          <ProfileGeneral doctorData={doctorData} />
+          <>
+            <ProfileGeneral doctorData={doctorData} />
+            <div className="flex justify-center items-center my-5">
+              <img src={doctorData.image} alt="Doctor" className="w-32 h-32 object-cover rounded-full" />
+            </div>
+          </>
         ) : (
           <div className="flex justify-center items-center">
             <Dna
@@ -75,6 +81,7 @@ const DoctorProfile = () => {
       <div>
         <ProfileTab />
       </div>
+      <ToastContainer />
     </div>
   );
 };

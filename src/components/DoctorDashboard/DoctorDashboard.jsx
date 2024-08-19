@@ -1,70 +1,67 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import DoctorAppointments from "./DoctorAppointments";
 import DoctorGeneral from "./DoctorGeneral";
-import axios from "axios";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { ethers } from "ethers";
-import { useAccount, useSigner, useProvider } from "wagmi";
-import deDoctorABI from "@/constants/constants";
+import { WeaveDB } from "weavedb"; 
 import { Dna } from "react-loader-spinner";
+import useAccount from "@/hooks/useAccount"; // Import your custom hook
 
 function DoctorDashboard() {
-  const provider = useProvider();
-  const { data: signer, isError, isLoading } = useSigner();
-  const { address, isConnecting, isDisconnected } = useAccount();
-  const [doctorData, setDoctorData] = useState();
-  const [doctorAppointmentList, setDoctorAppointmentList] = useState();
+  const { address } = useAccount();
+  const [doctorData, setDoctorData] = useState(null);
+  const [doctorAppointmentList, setDoctorAppointmentList] = useState([]);
 
-  const fetchDoctorData = useCallback(async () => {
-    let patientRegisterContract = new ethers.Contract(
-      process.env.NEXT_PUBLIC_DEDOCTOR_SMART_CONTRACT || "",
-      deDoctorABI,
-      signer || provider
-    );
-    let traction = await patientRegisterContract.getDoctorByWalletAddress(address);
-    let meta = await axios.get(traction.profileURI);
-    meta = meta.data;
-    let doctorId = traction.doctorId.toString();
-    setDoctorData({ ...meta, doctorId });
-  }, [address, provider, signer]);
+  const db = new WeaveDB(); // Initialize WeaveDB instance
 
-  const fetchDoctorAppointments = useCallback(async () => {
-    if (doctorData && doctorData.doctorId) {
-      let patientRegisterContract = new ethers.Contract(
-        process.env.NEXT_PUBLIC_DEDOCTOR_SMART_CONTRACT || "",
-        deDoctorABI,
-        signer || provider
-      );
-      let traction = await patientRegisterContract.getAppointmentsByDoctorId(doctorData.doctorId);
-      let newItems = await Promise.all(
-        traction.map(async (d) => {
-          return {
-            doctorId: d.doctorId.toString(),
-            patientId: d.patientId.toString(),
-            pastSymptoms: d.pastSymptoms,
-            symptoms: d.symptoms,
-            time: d.time,
-            date: d.date,
-            appointmentId: d.id.toString(),
-          };
-        })
-      );
-      setDoctorAppointmentList(newItems);
+  const fetchDoctorData = async () => {
+    const COLLECTION_NAME = "anavheoba"; // Replace with your collection name
+    const CURRENT_USER = address; // User's wallet address
+
+    const _posts = await db.cget(COLLECTION_NAME, [
+      "user_wallet",
+      "==",
+      CURRENT_USER,
+    ]);
+
+    if (_posts.length > 0) {
+      const meta = _posts[0];
+      setDoctorData(meta);
     }
-  }, [doctorData, provider, signer]);
+  };
+
+  const fetchDoctorAppointments = async () => {
+    const COLLECTION_NAME = "anavheoba"; // Replace with your collection name
+    const CURRENT_USER = address; // User's wallet address
+
+    const _appointments = await db.cget(COLLECTION_NAME, [
+      "doctor_wallet",
+      "==",
+      CURRENT_USER,
+    ]);
+
+    const newItems = _appointments.map((d) => ({
+      doctorId: d.doctorId.toString(),
+      patientId: d.patientId.toString(),
+      pastSymptoms: d.pastSymptoms,
+      symptoms: d.symptoms,
+      time: d.time,
+      date: d.date,
+      appointmentId: d.id.toString(),
+    }));
+
+    setDoctorAppointmentList(newItems);
+  };
 
   useEffect(() => {
     if (address) {
       fetchDoctorData();
     }
-  }, [address, fetchDoctorData]);
+  }, [address]);
 
   useEffect(() => {
-    if (doctorData && doctorData.doctorId) {
+    if (doctorData) {
       fetchDoctorAppointments();
     }
-  }, [doctorData, fetchDoctorAppointments]);
+  }, [doctorData]);
 
   return (
     <div className="flex space-x-5 my-8 mx-5">
@@ -85,7 +82,7 @@ function DoctorDashboard() {
         )}
       </div>
       <div>
-        {doctorAppointmentList ? (
+        {doctorAppointmentList.length > 0 ? (
           <DoctorAppointments doctorAppointmentList={doctorAppointmentList} />
         ) : (
           <div className="flex justify-end items-center">

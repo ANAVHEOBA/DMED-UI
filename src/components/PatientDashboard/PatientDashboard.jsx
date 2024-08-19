@@ -11,7 +11,6 @@ import "react-toastify/dist/ReactToastify.css";
 import { ethers } from "ethers";
 import { useAccount, useSigner, useProvider } from "wagmi";
 import deDoctorABI from "@/constants/constants";
-import generateIpfsMediaLink from "@/utils/generateIpfsLink";
 import { Dna } from "react-loader-spinner";
 
 function PatientDashboard() {

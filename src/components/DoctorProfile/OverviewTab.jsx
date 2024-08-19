@@ -26,15 +26,15 @@ function OverviewTab() {
         About Me
       </h5>
       <p className="text-[#272b41] dark:text-dark-muted">
-        Dr. Abraham Anavheoba has been working in the field of Obstetrics and
-        Gynaecology since 2013. She specializes in Reproductive medicine as well
+        Dr. Jessica Anavheoba has been working in the field of Obstetrics and
+        Gynaecology since 2016. She specializes in Reproductive medicine as well
         as general obstetrics and gynaecology. Prior to joining our practice, Dr
-        Anavheoba attended Rajiv Gandhi University, where she earned her
+        Anavheoba attended University Of Benin, where she earned her
         postgraduate degree. She was trained in infertility procedures in
-        Advanced Fertility Center, Odessa Regional Medical Center in Texas, USA.
+        Advanced Fertility Center, University Of Lagos, Nigeria.
         Her special interest is in treating infertility patients. Before joining
-        us, Dr. Anavheoba worked in reputed hospitals like Vydehi Hospital,
-        Manipal Hospitals Bangalore, and Yasomathi Hospital. She is now a
+        us, Dr. Anavheoba worked in reputed hospitals like mercy Hospital,
+        wesave Hospitals Nigeria, and UBTH Hospital. She is now a
         Consultant Obstetrician and Gynaecologist at Koshy's Hospital, Nigeria.
       </p>
       <div className="space-y-2">

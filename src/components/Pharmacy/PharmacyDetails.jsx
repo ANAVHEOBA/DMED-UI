@@ -8,7 +8,6 @@ import { useAccount, useSigner } from "wagmi";
 import { useProvider } from "wagmi";
 import { ethers } from "ethers";
 import deDoctorABI from "@/constants/constants";
-import axios from "axios";
 import generateIpfsMediaLink from "@/utils/generateIpfsLink";
 import { Dna } from "react-loader-spinner";
 
