@@ -59,11 +59,11 @@ const ChatWindow = ({ activeChat }) => {
   }, [db]);
 
   const handleCallClick = () => {
-    router.push('/call');
+    router.push('/Call');
   };
 
   const handleVideoClick = () => {
-    router.push('/video');
+    router.push('/Video');
   };
 
   if (!activeChat) {
